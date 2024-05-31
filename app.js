@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser  from 'cookie-parser'
 import morgan from 'morgan';
-
+import userRoutes from './Routes/userRoutes.js'
 const app=express()
 // Enable CORS for all routes
 app.use((req, res, next) => {
@@ -29,7 +29,7 @@ app.use('/ping',function(req,res){
     res.send('/pong')
 })
 
-
+app.use('/api',userRoutes)
 // routes of diffenent module
 // any other page which is not present and for that use *
 app.all('*',(req,res)=>{
