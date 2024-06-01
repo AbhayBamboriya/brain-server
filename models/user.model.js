@@ -32,7 +32,7 @@ const userSchema =  new Schema({
         type:'String',
 
         reqired:[true,'Password is Required'],
-        minLength:[3,'Password must contain at least minimum 5 character'],
+        minLength:[3,'Password must contain at least minimum 3 character'],
         select:false
         // password will not be shared by default
     },

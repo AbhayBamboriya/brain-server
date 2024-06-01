@@ -6,6 +6,7 @@ import fs from 'fs/promises'
 import crypto from 'crypto'
 // import sendEmail from "../utils/sendEmail.js";
 import AppError from "../utils/error.js";
+import sendEmail from "../utils/sendEmail.js";
 const cookieOptions={
     maxAge:7*24*60*60*1000,
     httpOnly:true, 
@@ -13,6 +14,7 @@ const cookieOptions={
 }
 const register  = async(req,res,next)=>{
     const {UserName,Name,email,password}=req.body;
+    console.log('data',UserName,Name,email,password);
     if(!UserName || !email || !password || !Name){
         return next(new AppError('All fields are Required',400))
     }
@@ -74,6 +76,7 @@ const register  = async(req,res,next)=>{
       const token=await user.generateJWTToken()
     //   setting thetoken to cookie
       res.cookie('token',token,cookieOptions)
+      sendEmail(user.email)
     res.status(201).json({
         success:true,
         message:"User registered successfully",
@@ -84,7 +87,10 @@ const register  = async(req,res,next)=>{
 
 const login=async(req,res,next)=>{
     try{
+        // console.log('req',body);
+        console.log(req);
         const {email,password}=req.body;
+        console.log('email',email,' ',password);
         if(!email || !password){
             return next (new AppError('All fields are required',400))
         }
