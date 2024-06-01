@@ -22,7 +22,14 @@ const register  = async(req,res,next)=>{
     if(userExists){
         return next(new AppError('Email already exist',400))
     }
-
+    const u=await User.findOne({UserName})
+    if(u){
+        res.status(400).json({
+            success:false,
+            message:"UserName already exist",
+        })
+        return
+    }
     const user =await User.create({
         UserName,
         Name,
@@ -323,19 +330,43 @@ const updateUser=async(req,res,next)=>{
 // }
 const checkUser=async(req,res,next)=>{
     console.log('req',req.body);
-    const {email}=req.body;
+    const {email,check}=req.body;
     console.log('email',email);
     if(!email){
         return next(new AppError('Email is required',400))
     }
-    const user=await User.findOne({email})
-    if(!user){
-        return next(new AppError('Enter registered email',400))
-    } 
-    res.status(200).json({
-        success:true,
-        message:'User Found'
-    })
+    if(check){
+        const user=await User.findOne({email})
+        if(user){
+            res.status(400).json({
+                success:false,
+                message:'Email ID already Register'
+            })
+            return
+        } 
+        res.status(200).json({
+            success:true,
+            message:'You can use these email'
+        })
+        
+    }
+    else{
+        // it is for forgot passwrd
+        const user=await User.findOne({email})
+        if(!user){
+            res.status(400).json({
+                success:false,
+                message:'Enter Registered UserId'
+            })
+            return
+        } 
+        res.status(200).json({
+            success:true,
+            message:'Gmail is verfied'
+        })
+
+        
+    }
 
 
 }
