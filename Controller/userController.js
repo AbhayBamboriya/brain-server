@@ -367,8 +367,44 @@ const checkUser=async(req,res,next)=>{
 
         
     }
+}
+function details(id){
 
+}
+const detail=async(req,res,next)=>{
+    try{
+        const {id}=req.body;
+        console.log('id',id);
+        if(!id){
+            return new AppError(400,'id required')
+        }
+        const user=await User.findById(id)
+        if(user){
+            res.status(400).json({
+                success:true,
+                // message:'Email ID already Register',
+                user
+            }) 
+        }    
+    }
+    catch(e){
+        console.log(e);
+    }
 
+}
+const allUser=async(req,res,next)=>{
+    try{
+        const id=req.params.userId
+        // $ne=not equal to
+        const users=await User.find({_id:{$ne:id}})
+        const userData=Promise.all(users.map(async(user)=>{
+            return  {email:user.email,UserName:user.UserName,Name:user.Name,Profile:user.profile.secure_url}
+        }))
+        res.status(200).json(await userData)
+    }
+    catch(e){
+        console.log(e);
+    }
 }
 export{
     register,
@@ -379,5 +415,7 @@ export{
     login,
     forgotPassword,
     resetPassword,
-    changePassword
+    changePassword,
+    allUser,
+    detail
 }
