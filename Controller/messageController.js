@@ -1,7 +1,8 @@
 import Messages from "../models/messaage.js"
 import User from "../models/user.model.js"
 import AppError from "../utils/error.js"
-
+import cloudinary from 'cloudinary'
+import fs from 'fs/promises'
 const send=async(req,res,next)=>{
     const {message}=req.body
     const {id}=req.params
@@ -22,7 +23,12 @@ const send=async(req,res,next)=>{
         id,
         url,
         username,
-        email
+        email,
+        post:{
+            public_id:email,
+            // secureurl is  environment variable with api key,api secret
+            secure_url:'cloudinary://378171611453713:jar_yV68UrVNSKbFbxleqoBxKJQ@dix9kn7zm'
+        }
     })
     if(!createMessage){
         return next(
@@ -30,6 +36,36 @@ const send=async(req,res,next)=>{
         )
     }
     console.log('before createMessage',createMessage);
+    if(req.file){
+       
+        try{
+            const result=await cloudinary.v2.uploader.upload(req.file.path,{
+                // at which folder you have to upload the image
+                folder:'lms',
+                width:250,
+                height:250,
+                // gravity is used to auto focus
+                gravity:'faces',
+                crop:'fill'
+            })
+            // try
+            if(result){
+                createMessage.post.public_id=result.public_id
+                createMessage.post.secure_url=result.secure_url    
+                console.log("URL IMAGE",result.secure_url);
+                
+                // remove file from local system/server
+                fs.rm(`uploads/${req.file.filename}`)
+
+            }
+        }catch(e){
+            return next(
+                new AppError(e || 'File not uploaded,please try again',500)
+            )
+        }
+    }
+  
+
     await createMessage.save()
     res.status(201).json({
         success:true,

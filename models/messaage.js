@@ -20,6 +20,14 @@ const messageSchema=mongoose.Schema({
         type:String,
         unique:true
     },
+    post:{
+        public_id:{
+            type:'String'
+        },
+        secure_url:{
+            type:'String'
+        }
+    },
 
 
 

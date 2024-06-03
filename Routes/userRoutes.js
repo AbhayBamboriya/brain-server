@@ -11,7 +11,7 @@ router.post('/reset',forgotPassword);
 router.post('/check',checkUser)
 router.post('/password/:resetToken',resetPassword) 
 router.post('/user/:id',allUser)
-router.post('/message/:id',send)
+router.post('/message/:id',upload.single("post"),send)
 router.get('/message',allMessage)
 router.get('/detail',detail)
 export default router
