@@ -15,82 +15,82 @@ const cookieOptions={
 const register  = async(req,res,next)=>{
     try{
         const {UserName,Name,email,password}=req.body;
-    console.log('data',UserName,Name,email,password);
-    if(!UserName || !email || !password || !Name){
-        return next(new AppError('All fields are Required',400))
-    }
-    const userExists = await User.findOne({email})
-    if(userExists){
-        return next(new AppError('Email already exist',400))
-    }
-    const u=await User.findOne({UserName})
-    if(u){
-        res.status(400).json({
-            success:false,
-            message:"UserName already exist",
-        })
-        return
-    }
-    const user =await User.create({
-        UserName,
-        Name,
-        email,
-        password,
-        profile:{
-            public_id:email,
-            // secureurl is  environment variable with api key,api secret
-            secure_url:'cloudinary://378171611453713:jar_yV68UrVNSKbFbxleqoBxKJQ@dix9kn7zm'
+        console.log('data',UserName,Name,email,password);
+        if(!UserName || !email || !password || !Name){
+            return next(new AppError('All fields are Required',400))
         }
-    })
-    // if not user doesnot stored succcessfully 
-    if(!user){
-        return next(new AppError('User registration is failed please try again',400))
-    }
-
-    if(req.file){
-       
-        try{
-            const result=await cloudinary.v2.uploader.upload(req.file.path,{
-                // at which folder you have to upload the image
-                folder:'lms',
-                width:250,
-                height:250,
-                // gravity is used to auto focus
-                gravity:'faces',
-                crop:'fill'
+        const userExists = await User.findOne({email})
+        if(userExists){
+            return next(new AppError('Email already exist',400))
+        }
+        const u=await User.findOne({UserName})
+        if(u){
+            res.status(400).json({
+                success:false,
+                message:"UserName already exist",
             })
-            // try
-            if(result){
-                user.profile.public_id=result.public_id
-
-                user.profile.secure_url=result.secure_url    
-                console.log("URL IMAGE",result.secure_url);
-                
-                // remove file from local system/server
-                fs.rm(`uploads/${req.file.filename}`)
-
-            }
-        }catch(e){
-            return next(
-                new AppError(error || 'File not uploaded,please try again',500)
-            )
+            return
         }
-    }
-  
-    // TODO: file upload
-    await user.save()   // user will be saved
-    user.password=undefined
-      // ater registration for dirctly login thatswyh used jwt token
-      const token=await user.generateJWTToken()
-    //   setting thetoken to cookie
-      res.cookie('token',token,cookieOptions)
-      sendEmail(user.email)
-    res.status(201).json({
-        success:true,
-        message:"User registered successfully",
-        user
+        const user =await User.create({
+            UserName,
+            Name,
+            email,
+            password,
+            profile:{
+                public_id:email,
+                // secureurl is  environment variable with api key,api secret
+                secure_url:'cloudinary://378171611453713:jar_yV68UrVNSKbFbxleqoBxKJQ@dix9kn7zm'
+            }
+        })
+        // if not user doesnot stored succcessfully 
+        if(!user){
+            return next(new AppError('User registration is failed please try again',400))
+        }
 
-    })
+        if(req.file){
+        
+            try{
+                const result=await cloudinary.v2.uploader.upload(req.file.path,{
+                    // at which folder you have to upload the image
+                    folder:'lms',
+                    width:250,
+                    height:250,
+                    // gravity is used to auto focus
+                    gravity:'faces',
+                    crop:'fill'
+                })
+                // try
+                if(result){
+                    user.profile.public_id=result.public_id
+
+                    user.profile.secure_url=result.secure_url    
+                    console.log("URL IMAGE",result.secure_url);
+                    
+                    // remove file from local system/server
+                    fs.rm(`uploads/${req.file.filename}`)
+
+                }
+            }catch(e){
+                return next(
+                    new AppError(error || 'File not uploaded,please try again',500)
+                )
+            }
+        }
+    
+        // TODO: file upload
+        await user.save()   // user will be saved
+        user.password=undefined
+        // ater registration for dirctly login thatswyh used jwt token
+        const token=await user.generateJWTToken()
+        //   setting thetoken to cookie
+        res.cookie('token',token,cookieOptions)
+        sendEmail(user.email)
+        res.status(201).json({
+            success:true,
+            message:"User registered successfully",
+            user
+
+        })
     }
     catch(e){
         return next(new AppError(e.message,500))
@@ -184,42 +184,42 @@ const forgotPassword=async(req,res,next)=>{
 }
 const resetPassword=async(req,res,next)=>{
    try{
-    console.log('reset Password');
-    console.log('req from frontend',req);
-    console.log("params "+req.params);
-    console.log("body "+JSON.stringify(req.body));
-    const {resetToken} = req.params;
-    const{password}=req.body
-    console.log("reset Token "+resetToken);
-    if(!password){
-        return next(
-            new AppError('password not present',400)
-        )
-    }
-    console.log("password "+password);
-    const forgotPasswordToken=crypto
-        .createHash('sha256')
-        .update(resetToken)
-        .digest('hex')
-    const user = await User.findOne({
-        // that token is existing or not
-        forgotPasswordToken,
-        forgotPasswordExpiry:{$gt: Date.now()}
-    })
-    if(!user){
-        return next(
-            new AppError('Token is invalid please try again',400)
-        )
-    }
+        console.log('reset Password');
+        console.log('req from frontend',req);
+        console.log("params "+req.params);
+        console.log("body "+JSON.stringify(req.body));
+        const {resetToken} = req.params;
+        const{password}=req.body
+        console.log("reset Token "+resetToken);
+        if(!password){
+            return next(
+                new AppError('password not present',400)
+            )
+        }
+        console.log("password "+password);
+        const forgotPasswordToken=crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex')
+        const user = await User.findOne({
+            // that token is existing or not
+            forgotPasswordToken,
+            forgotPasswordExpiry:{$gt: Date.now()}
+        })
+        if(!user){
+            return next(
+                new AppError('Token is invalid please try again',400)
+            )
+        }
 
-    user.password=password;
-    user.forgotPasswordExpiry=undefined
-    user.forgotPasswordToken=undefined
-    user.save();
-    res.status(200).json({
-        success:true,
-        message:'Password changed success'
-    })
+        user.password=password;
+        user.forgotPasswordExpiry=undefined
+        user.forgotPasswordToken=undefined
+        user.save();
+        res.status(200).json({
+            success:true,
+            message:'Password changed success'
+        })
    }
    catch(e){
         return next(new AppError(e.message,500))
@@ -231,37 +231,37 @@ const changePassword=async(req,res,next)=>{
 
     try{
         const {oldpassword,newpassword}= req.body
-    const {id}=req.user
-    console.log('id '+id);
-    console.log("old pass "+oldpassword);
-    console.log('new pass '+newpassword);
-    if(!oldpassword || !newpassword){
-        return next(
-            new AppError('All filds are mandatory',400)
-        )
-    }
+        const {id}=req.user
+        console.log('id '+id);
+        console.log("old pass "+oldpassword);
+        console.log('new pass '+newpassword);
+        if(!oldpassword || !newpassword){
+            return next(
+                new AppError('All filds are mandatory',400)
+            )
+        }
 
-    const user = await User.findById(id).select('+password')
-    if(!user){
-        return next(
-            new AppError('User does not exist',400)
-        )
+        const user = await User.findById(id).select('+password')
+        if(!user){
+            return next(
+                new AppError('User does not exist',400)
+            )
 
-    }
-    const isPasswordValid=await user.comparePassword(oldpassword)
-    if(!isPasswordValid){
-        return next(
-            new AppError('Invalid old password',400)
-        )
+        }
+        const isPasswordValid=await user.comparePassword(oldpassword)
+        if(!isPasswordValid){
+            return next(
+                new AppError('Invalid old password',400)
+            )
 
-    }
-    user.password=newpassword
-    await user.save()   //to save the changes in db
-    user.password=undefined
-    res.status(200).json({
-        success:true,
-        message:'Password changed successfully'
-    })
+        }
+        user.password=newpassword
+        await user.save()   //to save the changes in db
+        user.password=undefined
+        res.status(200).json({
+            success:true,
+            message:'Password changed successfully'
+        })
     }
     catch(e){
         return next(new AppError(e.message,500))
@@ -274,43 +274,43 @@ const changePassword=async(req,res,next)=>{
 const checkUser=async(req,res,next)=>{
     try{
         console.log('req',req.body);
-    const {email,check}=req.body;
-    console.log('email',email);
-    if(!email){
-        return next(new AppError('Email is required',400))
-    }
-    if(check){
-        const user=await User.findOne({email})
-        if(user){
-            res.status(400).json({
-                success:false,
-                message:'Email ID already Register'
+        const {email,check}=req.body;
+        console.log('email',email);
+        if(!email){
+            return next(new AppError('Email is required',400))
+        }
+        if(check){
+            const user=await User.findOne({email})
+            if(user){
+                res.status(400).json({
+                    success:false,
+                    message:'Email ID already Register'
+                })
+                return
+            } 
+            res.status(200).json({
+                success:true,
+                message:'You can use these email'
             })
-            return
-        } 
-        res.status(200).json({
-            success:true,
-            message:'You can use these email'
-        })
-        
-    }
-    else{
-        // it is for forgot passwrd
-        const user=await User.findOne({email})
-        if(!user){
-            res.status(400).json({
-                success:false,
-                message:'Enter Registered UserId'
+            
+        }
+        else{
+            // it is for forgot passwrd
+            const user=await User.findOne({email})
+            if(!user){
+                res.status(400).json({
+                    success:false,
+                    message:'Enter Registered UserId'
+                })
+                return
+            } 
+            res.status(200).json({
+                success:true,
+                message:'Gmail is verfied'
             })
-            return
-        } 
-        res.status(200).json({
-            success:true,
-            message:'Gmail is verfied'
-        })
 
-        
-    }
+            
+        }
     }
     catch(e){
         return next(new AppError(e.message,500))
