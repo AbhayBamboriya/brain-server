@@ -3,6 +3,7 @@ import cors from 'cors'
 import cookieParser  from 'cookie-parser'
 import morgan from 'morgan';
 import userRoutes from './Routes/userRoutes.js'
+import errorMiddleware from './middleware/error.middleware.js';
 const app=express()
 // Enable CORS for all routes
 app.use((req, res, next) => {
@@ -36,5 +37,5 @@ app.all('*',(req,res)=>{
     res.status(404).send('OOPS!!! 404 page not found')
 })
 // error will be send to user
-// app.use(errorMiddleware)
+app.use(errorMiddleware)
 export default app

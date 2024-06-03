@@ -9,8 +9,8 @@ import AppError from "../utils/error.js";
 import sendEmail from "../utils/sendEmail.js";
 const cookieOptions={
     maxAge:7*24*60*60*1000,
-    httpOnly:true, 
-    secure:true 
+    // httpOnly:true, 
+    // secure:true 
 }
 const register  = async(req,res,next)=>{
     const {UserName,Name,email,password}=req.body;
@@ -107,6 +107,7 @@ const login=async(req,res,next)=>{
             return next(new AppError('Email and Password doesnot match',400))
         }
         const token=await user.generateJWTToken()
+        console.log('token from login',token);
         user.password=undefined
         res.cookie('token',token,cookieOptions)
         res.status(200).json({

@@ -4,16 +4,12 @@ import AppError from "../utils/error.js"
 import cloudinary from 'cloudinary'
 import fs from 'fs/promises'
 const send=async(req,res,next)=>{
+    // console.log('req send',req);
     const {message}=req.body
     const {id}=req.params
-    console.log('id',id);
-    if(!message){
-        return next(
-            new AppError('All fields are required',400)
-        )
-    }
+    // console.log('id',id);
     const user=await User.findById(id)
-        
+    
     console.log('user detail from message',user);
     const url=user.profile.secure_url
     const username=user.UserName
@@ -36,8 +32,9 @@ const send=async(req,res,next)=>{
         )
     }
     console.log('before createMessage',createMessage);
+    console.log(req.file);
     if(req.file){
-       
+       console.log('reacj 1');
         try{
             const result=await cloudinary.v2.uploader.upload(req.file.path,{
                 // at which folder you have to upload the image
@@ -50,6 +47,7 @@ const send=async(req,res,next)=>{
             })
             // try
             if(result){
+                console.log('reacj 2');
                 createMessage.post.public_id=result.public_id
                 createMessage.post.secure_url=result.secure_url    
                 console.log("URL IMAGE",result.secure_url);
