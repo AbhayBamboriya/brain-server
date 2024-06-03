@@ -13,7 +13,8 @@ const cookieOptions={
     // secure:true 
 }
 const register  = async(req,res,next)=>{
-    const {UserName,Name,email,password}=req.body;
+    try{
+        const {UserName,Name,email,password}=req.body;
     console.log('data',UserName,Name,email,password);
     if(!UserName || !email || !password || !Name){
         return next(new AppError('All fields are Required',400))
@@ -90,6 +91,10 @@ const register  = async(req,res,next)=>{
         user
 
     })
+    }
+    catch(e){
+        return next(new AppError(e.message,500))
+    }
 }
 
 const login=async(req,res,next)=>{
@@ -132,73 +137,53 @@ const logout=(req,res)=>{
         message:"User Logged out successfully"
     })
 }
- 
-const getProfile=async(req,res,next)=>{
-    console.log("user"+req.user);
-    try{
-        const userId = req.user.id
-        // const userId=req.body
-        console.log(userId);
-        const user=await User.findById(userId)
-        console.log("user"+user);
-        res.status(200).json({
-            success:true,
-            message:"User Details",
-            user
-        })
-    }
-    // onst user = await User.findById(id).select('+password')
-    // if(!user){
-    //     return next(
-    //         new AppError('User does not exist',400)
-    //     )
 
-    // }
-    catch(e){
-        return next(new AppError(e.message,400))
-    }
-
-}
 
 
 // firgot and reset password is not working
 const forgotPassword=async(req,res,next)=>{
-    const {email}=req.body;
-    if(!email){
-        return next(new AppError('Email is require',400))
-    }
-    const user=await User.findOne({email})
-    if(!user){
-        return next(new AppError('Enter registered email',400))
-    } 
-      // Generating the reset token via the method we have in user model
-    const resetToken=await user.generatePasswordResetToken();
-    // saving the token to db
-    // saving the current token to DB so that for validation
-    await user.save() 
-    // console.log("token "+resetToken);
-    const resetPasswordUrl=`${process.env.FRONTEND_URL}password/${resetToken}`;
-    console.log("reset Token "+resetPasswordUrl);
-    const message= 'Mail is send to registered email id' 
-    const subject='Reset Password';
-    try{ 
-        // method that will send the  mail;  ;
-        const e=await sendEmail(email,subject,message)
-        // console.log("email "+e);
-        res.status(200).json({
-            success:true,
-            message:`Reset Password token has been send to ${email} successfully`,
-            resetToken
-        })
+    try{
+        const {email}=req.body;
+        if(!email){
+            return next(new AppError('Email is require',400))
+        }
+        const user=await User.findOne({email})
+        if(!user){
+            return next(new AppError('Enter registered email',400))
+        } 
+        // Generating the reset token via the method we have in user model
+        const resetToken=await user.generatePasswordResetToken();
+        // saving the token to db
+        // saving the current token to DB so that for validation
+        await user.save() 
+        // console.log("token "+resetToken);
+        const resetPasswordUrl=`${process.env.FRONTEND_URL}password/${resetToken}`;
+        console.log("reset Token "+resetPasswordUrl);
+        const message= 'Mail is send to registered email id' 
+        const subject='Reset Password';
+        try{ 
+            // method that will send the  mail;  ;
+            const e=await sendEmail(email,subject,message)
+            // console.log("email "+e);
+            res.status(200).json({
+                success:true,
+                message:`Reset Password token has been send to ${email} successfully`,
+                resetToken
+            })
+        }
+        catch(e){
+            user.forgotPasswordExpiry=undefined
+            user.forgotPasswordToken=undefined
+            await user.save()
+            return next(new AppError(toString(e).message,500)) 
+        }
     }
     catch(e){
-        user.forgotPasswordExpiry=undefined
-        user.forgotPasswordToken=undefined
-        await user.save()
-        return next(new AppError(toString(e).message,500)) 
+        return next(new AppError(e.message,500))
     }
 }
 const resetPassword=async(req,res,next)=>{
+   try{
     console.log('reset Password');
     console.log('req from frontend',req);
     console.log("params "+req.params);
@@ -235,11 +220,17 @@ const resetPassword=async(req,res,next)=>{
         success:true,
         message:'Password changed success'
     })
+   }
+   catch(e){
+        return next(new AppError(e.message,500))
+    }
+
 }
 
 const changePassword=async(req,res,next)=>{
 
-    const {oldpassword,newpassword}= req.body
+    try{
+        const {oldpassword,newpassword}= req.body
     const {id}=req.user
     console.log('id '+id);
     console.log("old pass "+oldpassword);
@@ -271,66 +262,18 @@ const changePassword=async(req,res,next)=>{
         success:true,
         message:'Password changed successfully'
     })
+    }
+    catch(e){
+        return next(new AppError(e.message,500))
+    }
 }
 
-const updateUser=async(req,res,next)=>{
-    const fullName=req.body.fullName
-    const id=req.user.id
-    // const {id}=req.body
-    console.log('fullname '+fullName);
-    console.log("id "+id);
-    const user=await User.findById(id);
-    console.log("user"+user);
-    if(!user){
-        return next(
-            new AppError('User does not exist',400)
-        )
 
-    }
-    if(fullName){
-        user.fullName=fullName
-    }
-    // update the avatar if avatar is provided 
-    if(req.file){
-        // destroying the existing image
-        await cloudinary.v2.uploader.destroy(user.avatar.public_id)
-            try{
-                const result=await cloudinary.v2.uploader.upload(req.file.path,{
-                    // at which folder you have to upload the image
-                    folder:'lms',
-                    width:250,
-                    height:250,
-                    // gravity is used to auto focus
-                    gravity:'faces',
-                    crop:'fill'
-                })
-                if(result){
-                    user.avatar.public_id=result.public_id
-                    user.avatar.secure_url=result.secure_url    
-                    console.log("url"+result.secure_url );
-                    // remove file from local system/server
-                    fs.rm(`uploads/${req.file.filename}`)
-    
-                }
-            }catch(e){
-                return next(
-                    new AppError(error || 'File not uploaded,please try again',500)
-                )
-            }
-        
-    }
-
-    await user.save()
-    res.status(200).json({
-        // user,
-        success:true,
-        message:"Changes are uploaded successfully"
-    })
-}
 
 // }
 const checkUser=async(req,res,next)=>{
-    console.log('req',req.body);
+    try{
+        console.log('req',req.body);
     const {email,check}=req.body;
     console.log('email',email);
     if(!email){
@@ -368,10 +311,12 @@ const checkUser=async(req,res,next)=>{
 
         
     }
+    }
+    catch(e){
+        return next(new AppError(e.message,500))
+    }
 }
-function details(id){
 
-}
 const detail=async(req,res,next)=>{
     try{
         const {id}=req.body;
@@ -409,10 +354,10 @@ const allUser=async(req,res,next)=>{
 }
 export{
     register,
-    getProfile,
+ 
     checkUser,
     logout,
-    updateUser,
+
     login,
     forgotPassword,
     resetPassword,

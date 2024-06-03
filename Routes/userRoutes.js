@@ -9,7 +9,7 @@ router.post('/register',upload.single("profile"),register)   //in upload single 
 router.post('/login',login) 
 router.get('/logout',logout)
 router.post('/reset',forgotPassword);
-router.post('/check',isLoggedIn,checkUser)
+router.post('/check',checkUser)
 router.post('/password/:resetToken',resetPassword) 
 router.post('/user/:id',isLoggedIn,allUser)
 router.post('/message/:id',isLoggedIn,upload.single("post"),send)
