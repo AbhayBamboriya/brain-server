@@ -12,6 +12,7 @@ const send=async(req,res,next)=>{
         const user=await User.findById(id)
         
         console.log('user detail from message',user);
+        console.log('');
         const url=user.profile.secure_url
         const username=user.UserName
         const email=user.email

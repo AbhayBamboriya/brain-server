@@ -100,7 +100,7 @@ const register  = async(req,res,next)=>{
 const login=async(req,res,next)=>{
     try{
         // console.log('req',body);
-        console.log(req);
+        // console.log(req.cookies);
         const {email,password}=req.body;
         console.log('email',email,' ',password);
         if(!email || !password){
@@ -111,10 +111,12 @@ const login=async(req,res,next)=>{
         if(!(user && (await user.comparePassword(password)))){
             return next(new AppError('Email and Password doesnot match',400))
         }
+        console.log('user from login ',user);
         const token=await user.generateJWTToken()
         console.log('token from login',token);
         user.password=undefined
         res.cookie('token',token,cookieOptions)
+        console.log('after change ',res.cookie._id);
         res.status(200).json({
             success:true,
             message:"User loged in successfully",

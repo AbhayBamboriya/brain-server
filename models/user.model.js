@@ -62,6 +62,7 @@ userSchema.pre('save',async function(next){
 userSchema.methods = {
 generateJWTToken: async function(){
     return await jwt.sign(
+        // {console.log(this.userName)},
         {userName:this.userName,id:this._id ,email:this.email},
         process.env.JWT_SECRET,
         {
